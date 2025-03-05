@@ -7,7 +7,11 @@ const path = require("path");
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 const { execSync } = require('child_process');
-const FILE_PATH = process.env.FILE_PATH || './temp'; // 运行文件夹，节点文件存放目录
+// 修改 FILE_PATH 定义
+const FILE_PATH = process.env.NETLIFY === 'true' ? 
+  '/tmp' : // Netlify环境使用/tmp目录
+  (process.env.FILE_PATH || './temp'); // 本地环境使用./temp
+
 const projectPageURL = process.env.URL || '';        // 填写项目域名可开启自动访问保活，非标端口的前缀是http://
 const intervalInseconds = process.env.TIME || 120;   // 自动访问间隔时间（120秒）
 const UUID = process.env.UUID || '89c13786-25aa-4520-b2e7-12cd60fb5202';

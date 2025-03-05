@@ -354,23 +354,13 @@ trojan://${UUID}@${CFIP}:${CFPORT}?security=tls&sni=${argoDomain}&type=ws&host=$
   }
 }
 
-// 1分钟后删除list,boot,config文件
-const npmPath = path.join(FILE_PATH, 'npm');
-const webPath = path.join(FILE_PATH, 'web');
-const botPath = path.join(FILE_PATH, 'bot');
-const bootLogPath = path.join(FILE_PATH, 'boot.log');
-const configPath = path.join(FILE_PATH, 'config.json');
-
-// 删除这里的重复声明
-// const isNetlify = process.env.NETLIFY === 'true';
-// const FILE_PATH = isNetlify ? 
-//   (process.env.NETLIFY_FUNCTION_DIR ? path.join(process.env.NETLIFY_FUNCTION_DIR, '../temp') : './temp') : 
-//   (process.env.FILE_PATH || './temp');
+// 1分钟后删除list文件
+const listPath = path.join(FILE_PATH, 'list');
 
 function cleanFiles() {
   setTimeout(() => {
     try {
-      const filesToClean = [bootLogPath, configPath, npmPath, webPath, botPath];
+      const filesToClean = [listPath]; // 只删除list文件
       filesToClean.forEach(filePath => {
         if (fs.existsSync(filePath)) {
           try {

@@ -7,7 +7,7 @@
   directory = "functions"
   node_bundler = "esbuild"
   external_node_modules = ["express", "axios"]
-  included_files = ["temp/**", "/tmp/**"]
+  included_files = ["temp/**"]
 
 [[redirects]]
   from = "/api/*"

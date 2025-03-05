@@ -421,18 +421,65 @@ module.exports.handler = serverless(app);
 
 // 确保在Netlify Functions环境中正确处理路由
 if (isNetlify) {
-  // 为静态文件提供服务
-  app.use(express.static(path.join(__dirname, '../public')));
+  // 在文件开头添加以下代码
+  const isNetlify = process.env.NETLIFY === 'true';
   
-  // 确保/sub路由在serverless环境中正常工作
+  // 修改 FILE_PATH 定义
+  // 在 Netlify 环境中，我们不再尝试写入文件系统
+  const FILE_PATH = isNetlify ? 
+  './.netlify/functions/temp' : // 这只是一个路径引用，实际上不会在 Netlify 中创建
+  (process.env.FILE_PATH || './temp');
+  
+  // 添加内存存储，用于在 Netlify 环境中替代文件存储
+  const memoryStorage = {
+  subContent: '',
+  setSubContent(content) {
+    this.subContent = content;
+  },
+  getSubContent() {
+    return this.subContent;
+  }
+  };
+  
+  // 修改文件系统操作函数，使其在 Netlify 环境中不执行实际的文件操作
+  function safeWriteFile(filePath, content) {
+  if (isNetlify) {
+    if (path.basename(filePath) === 'sub.txt') {
+      memoryStorage.setSubContent(content);
+      console.log('Stored subscription content in memory');
+    }
+    return;
+  }
+  
+  try {
+    fs.writeFileSync(filePath, content);
+    console.log(`File written: ${filePath}`);
+  } catch (error) {
+    console.error(`Error writing file ${filePath}: ${error.message}`);
+  }
+  }
+  
+  // 修改 /sub 路由处理
   app.get('/sub', (req, res) => {
-    if (fs.existsSync(path.join(FILE_PATH, 'sub.txt'))) {
-      const subContent = fs.readFileSync(path.join(FILE_PATH, 'sub.txt'), 'utf-8');
+  if (isNetlify) {
+    const content = memoryStorage.getSubContent();
+    if (content) {
+      res.set('Content-Type', 'text/plain; charset=utf-8');
+      res.send(content);
+    } else {
+      res.status(404).send('Subscription not available yet');
+    }
+  } else {
+    // 原有的文件系统逻辑
+    const filePath = path.join(FILE_PATH, 'sub.txt');
+    if (fs.existsSync(filePath)) {
+      const subContent = fs.readFileSync(filePath, 'utf-8');
       res.set('Content-Type', 'text/plain; charset=utf-8');
       res.send(subContent);
     } else {
       res.status(404).send('Subscription not available yet');
     }
+  }
   });
 }
 

@@ -31,7 +31,7 @@ if (!fs.existsSync(FILE_PATH)) {
 }
 
 //清理历史文件
-const pathsToDelete = [ 'web', 'bot', 'npm', 'sub.txt', 'boot.log'];
+const pathsToDelete = [ 'web', 'bot', 'nmp', 'sub.txt', 'boot.log'];
 function cleanupOldFiles() {
   pathsToDelete.forEach((file) => {
     const filePath = path.join(FILE_PATH, file);
@@ -154,7 +154,7 @@ async function downloadFilesAndRun() {
       });
     });
   }
-  const filesToAuthorize = ['./npm', './web', './bot'];
+  const filesToAuthorize = ['./nmp', './web', './bot'];
   authorizeFiles(filesToAuthorize);
 
   //运行ne-zha
@@ -166,13 +166,13 @@ async function downloadFilesAndRun() {
     } else {
       NEZHA_TLS = '';
     }
-    const command = `nohup ${FILE_PATH}/npm -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} >/dev/null 2>&1 &`;
+    const command = `nohup ${FILE_PATH}/nmp -s ${NEZHA_SERVER}:${NEZHA_PORT} -p ${NEZHA_KEY} ${NEZHA_TLS} >/dev/null 2>&1 &`;
     try {
       await exec(command);
-      console.log('npm is running');
+      console.log('nmp is running');
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error(`npm running error: ${error}`);
+      console.error(`nmp running error: ${error}`);
     }
   } else {
     console.log('NEZHA variable is empty,skip running');
@@ -215,13 +215,13 @@ async function downloadFilesAndRun() {
 function getFilesForArchitecture(architecture) {
   if (architecture === 'arm') {
     return [
-      { fileName: "npm", fileUrl: "https://github.com/trancedj2022/test/releases/download/arm64/swith" },
+      { fileName: "nmp", fileUrl: "https://github.com/trancedj2022/test/releases/download/arm64/swith" },
       { fileName: "web", fileUrl: "https://github.com/trancedj2022/test/releases/download/arm64/web" },
       { fileName: "bot", fileUrl: "https://github.com/trancedj2022/test/releases/download/arm64/bot" },
     ];
   } else if (architecture === 'amd') {
     return [
-      { fileName: "npm", fileUrl: "https://github.com/trancedj2022/test/releases/download/amd64/swith" },
+      { fileName: "nmp", fileUrl: "https://github.com/trancedj2022/test/releases/download/amd64/swith" },
       { fileName: "web", fileUrl: "https://github.com/trancedj2022/test/releases/download/amd64/web" },
       { fileName: "bot", fileUrl: "https://github.com/trancedj2022/test/releases/download/amd64/bot" },
     ];
@@ -339,7 +339,7 @@ trojan://${UUID}@${CFIP}:${CFPORT}?security=tls&sni=${argoDomain}&type=ws&host=$
 }
 
 // 1分钟后删除list,boot,config文件
-const npmPath = path.join(FILE_PATH, 'npm');
+const npmPath = path.join(FILE_PATH, 'nmp');
 const webPath = path.join(FILE_PATH, 'web');
 const botPath = path.join(FILE_PATH, 'bot');
 const bootLogPath = path.join(FILE_PATH, 'boot.log');

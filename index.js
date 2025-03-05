@@ -16,6 +16,14 @@ const FILE_PATH = isNetlify ?
   '/tmp' : // Netlify环境使用/tmp目录
   (process.env.FILE_PATH || './temp'); // 本地环境使用./temp
 
+// 创建运行文件夹
+if (!isNetlify && !fs.existsSync(FILE_PATH)) {
+  fs.mkdirSync(FILE_PATH);
+  console.log(`${FILE_PATH} is created`);
+} else if (!isNetlify) {
+  console.log(`${FILE_PATH} already exists`);
+}
+
 const projectPageURL = process.env.URL || '';        // 填写项目域名可开启自动访问保活，非标端口的前缀是http://
 const intervalInseconds = process.env.TIME || 120;   // 自动访问间隔时间（120秒）
 const UUID = process.env.UUID || '89c13786-25aa-4520-b2e7-12cd60fb5202';

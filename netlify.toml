@@ -1,6 +1,5 @@
 [build]
   command = "npm run build"
-  publish = "/temp"
 
 [dev]
   command = "npm start"

@@ -16,7 +16,7 @@ const FILE_PATH = isNetlify ?
   '/tmp' : // Netlify环境使用/tmp目录
   (process.env.FILE_PATH || './temp'); // 本地环境使用./temp
 
-// 创建运行文件夹
+// 创建运行文件夹 - 只在非Netlify环境下创建
 if (!isNetlify && !fs.existsSync(FILE_PATH)) {
   fs.mkdirSync(FILE_PATH);
   console.log(`${FILE_PATH} is created`);
@@ -339,8 +339,29 @@ trojan://${UUID}@${CFIP}:${CFPORT}?security=tls&sni=${argoDomain}&type=ws&host=$
         // 打印 sub.txt 内容到控制台
         console.log(Buffer.from(subTxt).toString('base64'));
         const filePath = path.join(FILE_PATH, 'sub.txt');
-        fs.writeFileSync(filePath, Buffer.from(subTxt).toString('base64'));
-        console.log(`${FILE_PATH}/sub.txt saved successfully`);
+        // 添加安全的文件写入函数
+        function safeWriteFile(filePath, content) {
+          if (isNetlify) {
+            if (path.basename(filePath) === 'sub.txt') {
+              memoryStorage.setSubContent(content);
+              console.log('Stored subscription content in memory');
+            }
+            return;
+          }
+          
+          try {
+            fs.writeFileSync(filePath, content);
+            console.log(`File written: ${filePath}`);
+          } catch (error) {
+            console.error(`Error writing file ${filePath}: ${error.message}`);
+          }
+        }
+
+        // 修改所有 fs.writeFileSync 调用为 safeWriteFile
+        // 例如:
+        // fs.writeFileSync(path.join(FILE_PATH, 'config.json'), JSON.stringify(config, null, 2));
+        // 改为:
+        safeWriteFile(path.join(FILE_PATH, 'config.json'), JSON.stringify(config, null, 2));
 
         // 将内容进行 base64 编码并写入 /sub 路由
         app.get('/sub', (req, res) => {
@@ -419,47 +440,19 @@ module.exports.handler = serverless(app);
 
 // 确保在Netlify Functions环境中正确处理路由
 if (isNetlify) {
-  // 在文件开头添加以下代码
-  const isNetlify = process.env.NETLIFY === 'true';
-  
-  // 修改 FILE_PATH 定义
-  // 在 Netlify 环境中，我们不再尝试写入文件系统
-  const FILE_PATH = isNetlify ? 
-  './.netlify/functions/temp' : // 这只是一个路径引用，实际上不会在 Netlify 中创建
-  (process.env.FILE_PATH || './temp');
-  
   // 添加内存存储，用于在 Netlify 环境中替代文件存储
   const memoryStorage = {
-  subContent: '',
-  setSubContent(content) {
-    this.subContent = content;
-  },
-  getSubContent() {
-    return this.subContent;
-  }
-  };
-  
-  // 修改文件系统操作函数，使其在 Netlify 环境中不执行实际的文件操作
-  function safeWriteFile(filePath, content) {
-  if (isNetlify) {
-    if (path.basename(filePath) === 'sub.txt') {
-      memoryStorage.setSubContent(content);
-      console.log('Stored subscription content in memory');
+    subContent: '',
+    setSubContent(content) {
+      this.subContent = content;
+    },
+    getSubContent() {
+      return this.subContent;
     }
-    return;
-  }
-  
-  try {
-    fs.writeFileSync(filePath, content);
-    console.log(`File written: ${filePath}`);
-  } catch (error) {
-    console.error(`Error writing file ${filePath}: ${error.message}`);
-  }
-  }
+  };
   
   // 修改 /sub 路由处理
   app.get('/sub', (req, res) => {
-  if (isNetlify) {
     const content = memoryStorage.getSubContent();
     if (content) {
       res.set('Content-Type', 'text/plain; charset=utf-8');
@@ -467,17 +460,6 @@ if (isNetlify) {
     } else {
       res.status(404).send('Subscription not available yet');
     }
-  } else {
-    // 原有的文件系统逻辑
-    const filePath = path.join(FILE_PATH, 'sub.txt');
-    if (fs.existsSync(filePath)) {
-      const subContent = fs.readFileSync(filePath, 'utf-8');
-      res.set('Content-Type', 'text/plain; charset=utf-8');
-      res.send(subContent);
-    } else {
-      res.status(404).send('Subscription not available yet');
-    }
-  }
   });
 }
 

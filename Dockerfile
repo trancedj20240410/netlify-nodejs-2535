@@ -9,7 +9,7 @@ RUN npm install
 COPY . .
 
 # 创建必要的目录
-RUN mkdir -p ./temp ./public ./functions
+RUN mkdir -p ./tmp ./public ./functions
 
 # 为Netlify环境准备
 RUN if [ ! -d "./public" ]; then mkdir -p ./public; fi

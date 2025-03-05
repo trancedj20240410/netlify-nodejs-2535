@@ -7,23 +7,7 @@ const path = require("path");
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 const { execSync } = require('child_process');
-
-// 添加Netlify环境检测
-const isNetlify = process.env.NETLIFY === 'true';
-
-// 修改 FILE_PATH 定义
-const FILE_PATH = isNetlify ? 
-  '/tmp' : // Netlify环境使用/tmp目录
-  (process.env.FILE_PATH || './temp'); // 本地环境使用./temp
-
-// 创建运行文件夹 - 只在非Netlify环境下创建
-if (!isNetlify && !fs.existsSync(FILE_PATH)) {
-  fs.mkdirSync(FILE_PATH);
-  console.log(`${FILE_PATH} is created`);
-} else if (!isNetlify) {
-  console.log(`${FILE_PATH} already exists`);
-}
-
+const FILE_PATH = process.env.FILE_PATH || './temp'; // 运行文件夹，节点文件存放目录
 const projectPageURL = process.env.URL || '';        // 填写项目域名可开启自动访问保活，非标端口的前缀是http://
 const intervalInseconds = process.env.TIME || 120;   // 自动访问间隔时间（120秒）
 const UUID = process.env.UUID || '89c13786-25aa-4520-b2e7-12cd60fb5202';
@@ -225,8 +209,8 @@ async function downloadFilesAndRun() {
     }
   }
   await new Promise((resolve) => setTimeout(resolve, 5000));
-}
 
+}
 //根据系统架构返回对应的url
 function getFilesForArchitecture(architecture) {
   if (architecture === 'arm') {
@@ -339,29 +323,8 @@ trojan://${UUID}@${CFIP}:${CFPORT}?security=tls&sni=${argoDomain}&type=ws&host=$
         // 打印 sub.txt 内容到控制台
         console.log(Buffer.from(subTxt).toString('base64'));
         const filePath = path.join(FILE_PATH, 'sub.txt');
-        // 添加安全的文件写入函数
-        function safeWriteFile(filePath, content) {
-          if (isNetlify) {
-            if (path.basename(filePath) === 'sub.txt') {
-              memoryStorage.setSubContent(content);
-              console.log('Stored subscription content in memory');
-            }
-            return;
-          }
-          
-          try {
-            fs.writeFileSync(filePath, content);
-            console.log(`File written: ${filePath}`);
-          } catch (error) {
-            console.error(`Error writing file ${filePath}: ${error.message}`);
-          }
-        }
-
-        // 修改所有 fs.writeFileSync 调用为 safeWriteFile
-        // 例如:
-        // fs.writeFileSync(path.join(FILE_PATH, 'config.json'), JSON.stringify(config, null, 2));
-        // 改为:
-        safeWriteFile(path.join(FILE_PATH, 'config.json'), JSON.stringify(config, null, 2));
+        fs.writeFileSync(filePath, Buffer.from(subTxt).toString('base64'));
+        console.log(`${FILE_PATH}/sub.txt saved successfully`);
 
         // 将内容进行 base64 编码并写入 /sub 路由
         app.get('/sub', (req, res) => {
@@ -375,30 +338,26 @@ trojan://${UUID}@${CFIP}:${CFPORT}?security=tls&sni=${argoDomain}&type=ws&host=$
   }
 }
 
-// 1分钟后删除list文件
-const listPath = path.join(FILE_PATH, 'list');
-
+// 1分钟后删除list,boot,config文件
+const npmPath = path.join(FILE_PATH, 'npm');
+const webPath = path.join(FILE_PATH, 'web');
+const botPath = path.join(FILE_PATH, 'bot');
+const bootLogPath = path.join(FILE_PATH, 'boot.log');
+const configPath = path.join(FILE_PATH, 'config.json');
 function cleanFiles() {
   setTimeout(() => {
-    try {
-      const filesToClean = [listPath]; // 只删除list文件
-      filesToClean.forEach(filePath => {
-        if (fs.existsSync(filePath)) {
-          try {
-            fs.unlinkSync(filePath);
-            console.log(`Cleaned up: ${filePath}`);
-          } catch (err) {
-            console.error(`Error deleting ${filePath}: ${err.message}`);
-          }
-        }
-      });
+    exec(`rm -rf ${bootLogPath} ${configPath} ${npmPath} ${webPath} ${botPath}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error while deleting files: ${error}`);
+        return;
+      }
+      console.clear()
       console.log('App is running');
       console.log('Thank you for using this script, enjoy!');
-    } catch (error) {
-      console.error(`Error while deleting files: ${error.message}`);
-    }
+    });
   }, 60000); // 60 秒
 }
+cleanFiles();
 
 // 自动访问项目URL
 let hasLoggedEmptyMessage = false;
@@ -433,38 +392,4 @@ async function startserver() {
 }
 startserver();
 
-// 为Netlify添加serverless函数支持
-const serverless = require('serverless-http');
-module.exports = app;
-module.exports.handler = serverless(app);
-
-// 确保在Netlify Functions环境中正确处理路由
-if (isNetlify) {
-  // 添加内存存储，用于在 Netlify 环境中替代文件存储
-  const memoryStorage = {
-    subContent: '',
-    setSubContent(content) {
-      this.subContent = content;
-    },
-    getSubContent() {
-      return this.subContent;
-    }
-  };
-  
-  // 修改 /sub 路由处理
-  app.get('/sub', (req, res) => {
-    const content = memoryStorage.getSubContent();
-    if (content) {
-      res.set('Content-Type', 'text/plain; charset=utf-8');
-      res.send(content);
-    } else {
-      res.status(404).send('Subscription not available yet');
-    }
-  });
-}
-
-// 仅在非Netlify环境下直接启动服务器
-if (!isNetlify) {
-  app.listen(PORT, () => console.log(`Http server is running on port:${PORT}!`));
-  startserver();
-}
+app.listen(PORT, () => console.log(`Http server is running on port:${PORT}!`));

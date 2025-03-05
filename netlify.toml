@@ -3,32 +3,14 @@
   publish = "public"
   functions = "functions"
 
-[functions]
-  directory = "functions"
-  node_bundler = "esbuild"
-  external_node_modules = ["express", "axios"]
-  # 移除对 temp 目录的引用
-  # included_files = ["temp/**"]
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/index/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/sub"
-  to = "/.netlify/functions/index/sub"
-  status = 200
+[dev]
+  command = "npm start"
+  port = 3000
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[dev]
-  command = "npm run dev"
-  port = 3000
-  publish = "public"
 
 [build.environment]
   NODE_VERSION = "16"

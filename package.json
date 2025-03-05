@@ -1,0 +1,28 @@
+{
+  "name": "nodejs-argo",
+  "version": "8.8.8",
+  "description": "Node.js application for Netlify deployment",
+  "main": "index.js",
+  "author": "trance",
+  "repository": "https://github.com/trance/nodejs-argo",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node index.js",
+    "build": "npm install && mkdir -p functions && cp index.js functions/index.js",
+    "dev": "nodemon index.js",
+    "netlify:dev": "netlify dev"
+  },
+  "dependencies": {
+    "axios": "latest",
+    "express": "latest",
+    "serverless-http": "^3.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "netlify-cli": "^15.0.0"
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}

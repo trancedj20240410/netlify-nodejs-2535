@@ -225,8 +225,8 @@ async function downloadFilesAndRun() {
     }
   }
   await new Promise((resolve) => setTimeout(resolve, 5000));
-
 }
+
 //根据系统架构返回对应的url
 function getFilesForArchitecture(architecture) {
   if (architecture === 'arm') {

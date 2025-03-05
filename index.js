@@ -7,8 +7,12 @@ const path = require("path");
 const { promisify } = require('util');
 const exec = promisify(require('child_process').exec);
 const { execSync } = require('child_process');
+
+// 添加Netlify环境检测
+const isNetlify = process.env.NETLIFY === 'true';
+
 // 修改 FILE_PATH 定义
-const FILE_PATH = process.env.NETLIFY === 'true' ? 
+const FILE_PATH = isNetlify ? 
   '/tmp' : // Netlify环境使用/tmp目录
   (process.env.FILE_PATH || './temp'); // 本地环境使用./temp
 

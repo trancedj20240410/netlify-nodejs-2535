@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const exec = require("child_process").exec;
+const FILE_PATH = process.env.FILE_PATH || './temp'; // 运行文件夹，节点文件存放目录
 const PORT = process.env.PORT || Math.floor(Math.random() * (65535 - 10000 + 1)) + 10000;
 
 // Run start.sh
